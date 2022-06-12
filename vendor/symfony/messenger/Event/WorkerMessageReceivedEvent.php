@@ -18,7 +18,7 @@ namespace Symfony\Component\Messenger\Event;
  */
 final class WorkerMessageReceivedEvent extends AbstractWorkerMessageEvent
 {
-    private bool $shouldHandle = true;
+    private $shouldHandle = true;
 
     public function shouldHandle(bool $shouldHandle = null): bool
     {

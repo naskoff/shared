@@ -20,7 +20,7 @@ use Symfony\Component\Messenger\Event\WorkerStartedEvent;
  */
 class StopWorkerOnSigtermSignalListener implements EventSubscriberInterface
 {
-    private ?LoggerInterface $logger;
+    private $logger;
 
     public function __construct(LoggerInterface $logger = null)
     {
@@ -30,13 +30,15 @@ class StopWorkerOnSigtermSignalListener implements EventSubscriberInterface
     public function onWorkerStarted(WorkerStartedEvent $event): void
     {
         pcntl_signal(\SIGTERM, function () use ($event) {
-            $this->logger?->info('Received SIGTERM signal.', ['transport_names' => $event->getWorker()->getMetadata()->getTransportNames()]);
+            if (null !== $this->logger) {
+                $this->logger->info('Received SIGTERM signal.', ['transport_names' => $event->getWorker()->getMetadata()->getTransportNames()]);
+            }
 
             $event->getWorker()->stop();
         });
     }
 
-    public static function getSubscribedEvents(): array
+    public static function getSubscribedEvents()
     {
         if (!\function_exists('pcntl_signal')) {
             return [];

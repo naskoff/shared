@@ -20,8 +20,8 @@ namespace Symfony\Component\Messenger\Stamp;
  */
 final class SentStamp implements NonSendableStampInterface
 {
-    private string $senderClass;
-    private ?string $senderAlias;
+    private $senderClass;
+    private $senderAlias;
 
     public function __construct(string $senderClass, string $senderAlias = null)
     {

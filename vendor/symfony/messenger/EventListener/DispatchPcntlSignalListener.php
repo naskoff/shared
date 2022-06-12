@@ -24,7 +24,7 @@ class DispatchPcntlSignalListener implements EventSubscriberInterface
         pcntl_signal_dispatch();
     }
 
-    public static function getSubscribedEvents(): array
+    public static function getSubscribedEvents()
     {
         if (!\function_exists('pcntl_signal_dispatch')) {
             return [];

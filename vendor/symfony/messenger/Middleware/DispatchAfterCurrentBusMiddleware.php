@@ -33,13 +33,13 @@ class DispatchAfterCurrentBusMiddleware implements MiddlewareInterface
     /**
      * @var QueuedEnvelope[] A queue of messages and next middleware
      */
-    private array $queue = [];
+    private $queue = [];
 
     /**
      * @var bool this property is used to signal if we are inside a the first/root call to
      *           MessageBusInterface::dispatch() or if dispatch has been called inside a message handler
      */
-    private bool $isRootDispatchCallRunning = false;
+    private $isRootDispatchCallRunning = false;
 
     public function handle(Envelope $envelope, StackInterface $stack): Envelope
     {
@@ -109,8 +109,11 @@ class DispatchAfterCurrentBusMiddleware implements MiddlewareInterface
  */
 final class QueuedEnvelope
 {
-    private Envelope $envelope;
-    private StackInterface $stack;
+    /** @var Envelope */
+    private $envelope;
+
+    /** @var StackInterface */
+    private $stack;
 
     public function __construct(Envelope $envelope, StackInterface $stack)
     {

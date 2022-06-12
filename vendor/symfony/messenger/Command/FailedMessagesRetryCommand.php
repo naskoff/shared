@@ -12,7 +12,6 @@
 namespace Symfony\Component\Messenger\Command;
 
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Exception\RuntimeException;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -29,19 +28,20 @@ use Symfony\Component\Messenger\Transport\Receiver\ListableReceiverInterface;
 use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
 use Symfony\Component\Messenger\Transport\Receiver\SingleMessageReceiver;
 use Symfony\Component\Messenger\Worker;
-use Symfony\Contracts\Service\ServiceProviderInterface;
 
 /**
  * @author Ryan Weaver <ryan@symfonycasts.com>
  */
-#[AsCommand(name: 'messenger:failed:retry', description: 'Retry one or more messages from the failure transport')]
 class FailedMessagesRetryCommand extends AbstractFailedMessagesCommand
 {
-    private EventDispatcherInterface $eventDispatcher;
-    private MessageBusInterface $messageBus;
-    private ?LoggerInterface $logger;
+    protected static $defaultName = 'messenger:failed:retry';
+    protected static $defaultDescription = 'Retry one or more messages from the failure transport';
 
-    public function __construct(?string $globalReceiverName, ServiceProviderInterface $failureTransports, MessageBusInterface $messageBus, EventDispatcherInterface $eventDispatcher, LoggerInterface $logger = null)
+    private $eventDispatcher;
+    private $messageBus;
+    private $logger;
+
+    public function __construct(?string $globalReceiverName, $failureTransports, MessageBusInterface $messageBus, EventDispatcherInterface $eventDispatcher, LoggerInterface $logger = null)
     {
         $this->eventDispatcher = $eventDispatcher;
         $this->messageBus = $messageBus;
@@ -61,6 +61,7 @@ class FailedMessagesRetryCommand extends AbstractFailedMessagesCommand
                 new InputOption('force', null, InputOption::VALUE_NONE, 'Force action without confirmation'),
                 new InputOption('transport', null, InputOption::VALUE_OPTIONAL, 'Use a specific failure transport', self::DEFAULT_TRANSPORT_OPTION),
             ])
+            ->setDescription(self::$defaultDescription)
             ->setHelp(<<<'EOF'
 The <info>%command.name%</info> retries message in the failure transport.
 
@@ -86,7 +87,7 @@ EOF
     /**
      * {@inheritdoc}
      */
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         $this->eventDispatcher->addSubscriber(new StopWorkerOnMessageLimitListener(1));
 

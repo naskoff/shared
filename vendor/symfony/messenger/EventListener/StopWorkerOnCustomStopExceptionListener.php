@@ -22,7 +22,7 @@ use Symfony\Component\Messenger\Exception\StopWorkerExceptionInterface;
  */
 class StopWorkerOnCustomStopExceptionListener implements EventSubscriberInterface
 {
-    private bool $stop = false;
+    private $stop = false;
 
     public function onMessageFailed(WorkerMessageFailedEvent $event): void
     {

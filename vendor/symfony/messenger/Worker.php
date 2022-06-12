@@ -11,8 +11,9 @@
 
 namespace Symfony\Component\Messenger;
 
-use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\EventDispatcher\Event;
+use Symfony\Component\EventDispatcher\LegacyEventDispatcherProxy;
 use Symfony\Component\Messenger\Event\WorkerMessageFailedEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageHandledEvent;
 use Symfony\Component\Messenger\Event\WorkerMessageReceivedEvent;
@@ -29,6 +30,7 @@ use Symfony\Component\Messenger\Stamp\NoAutoAckStamp;
 use Symfony\Component\Messenger\Stamp\ReceivedStamp;
 use Symfony\Component\Messenger\Transport\Receiver\QueueReceiverInterface;
 use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
@@ -39,14 +41,14 @@ use Symfony\Contracts\Service\ResetInterface;
  */
 class Worker
 {
-    private array $receivers;
-    private MessageBusInterface $bus;
-    private ?EventDispatcherInterface $eventDispatcher;
-    private ?LoggerInterface $logger;
-    private bool $shouldStop = false;
-    private WorkerMetadata $metadata;
-    private array $acks = [];
-    private \SplObjectStorage $unacks;
+    private $receivers;
+    private $bus;
+    private $eventDispatcher;
+    private $logger;
+    private $shouldStop = false;
+    private $metadata;
+    private $acks = [];
+    private $unacks;
 
     /**
      * @param ReceiverInterface[] $receivers Where the key is the transport name
@@ -56,7 +58,7 @@ class Worker
         $this->receivers = $receivers;
         $this->bus = $bus;
         $this->logger = $logger;
-        $this->eventDispatcher = $eventDispatcher;
+        $this->eventDispatcher = class_exists(Event::class) ? LegacyEventDispatcherProxy::decorate($eventDispatcher) : $eventDispatcher;
         $this->metadata = new WorkerMetadata([
             'transportNames' => array_keys($receivers),
         ]);
@@ -79,7 +81,7 @@ class Worker
 
         $this->metadata->set(['queueNames' => $queueNames]);
 
-        $this->eventDispatcher?->dispatch(new WorkerStartedEvent($this));
+        $this->dispatchEvent(new WorkerStartedEvent($this));
 
         if ($queueNames) {
             // if queue names are specified, all receivers must implement the QueueReceiverInterface
@@ -104,7 +106,7 @@ class Worker
                     $envelopeHandled = true;
 
                     $this->handleMessage($envelope, $transportName);
-                    $this->eventDispatcher?->dispatch(new WorkerRunningEvent($this, false));
+                    $this->dispatchEvent(new WorkerRunningEvent($this, false));
 
                     if ($this->shouldStop) {
                         break 2;
@@ -124,7 +126,7 @@ class Worker
             }
 
             if (!$envelopeHandled) {
-                $this->eventDispatcher?->dispatch(new WorkerRunningEvent($this, true));
+                $this->dispatchEvent(new WorkerRunningEvent($this, true));
 
                 if (0 < $sleep = (int) ($options['sleep'] - 1e6 * (microtime(true) - $envelopeHandledStart))) {
                     usleep($sleep);
@@ -133,14 +135,14 @@ class Worker
         }
 
         $this->flush(true);
-        $this->eventDispatcher?->dispatch(new WorkerStoppedEvent($this));
+        $this->dispatchEvent(new WorkerStoppedEvent($this));
         $this->resetReceiverConnections();
     }
 
     private function handleMessage(Envelope $envelope, string $transportName): void
     {
         $event = new WorkerMessageReceivedEvent($envelope, $transportName);
-        $this->eventDispatcher?->dispatch($event);
+        $this->dispatchEvent($event);
         $envelope = $event->getEnvelope();
 
         if (!$event->shouldHandle()) {
@@ -191,7 +193,7 @@ class Worker
 
                 $failedEvent = new WorkerMessageFailedEvent($envelope, $transportName, $e);
 
-                $this->eventDispatcher?->dispatch($failedEvent);
+                $this->dispatchEvent($failedEvent);
                 $envelope = $failedEvent->getEnvelope();
 
                 if (!$rejectFirst) {
@@ -202,7 +204,7 @@ class Worker
             }
 
             $handledEvent = new WorkerMessageHandledEvent($envelope, $transportName);
-            $this->eventDispatcher?->dispatch($handledEvent);
+            $this->dispatchEvent($handledEvent);
             $envelope = $handledEvent->getEnvelope();
 
             if (null !== $this->logger) {
@@ -246,7 +248,9 @@ class Worker
 
     public function stop(): void
     {
-        $this->logger?->info('Stopping worker.', ['transport_names' => $this->metadata->getTransportNames()]);
+        if (null !== $this->logger) {
+            $this->logger->info('Stopping worker.', ['transport_names' => $this->metadata->getTransportNames()]);
+        }
 
         $this->shouldStop = true;
     }
@@ -263,5 +267,14 @@ class Worker
                 $receiver->reset();
             }
         }
+    }
+
+    private function dispatchEvent(object $event): void
+    {
+        if (null === $this->eventDispatcher) {
+            return;
+        }
+
+        $this->eventDispatcher->dispatch($event);
     }
 }

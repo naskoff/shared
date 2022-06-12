@@ -31,13 +31,28 @@ use Symfony\Component\Messenger\Transport\Receiver\ReceiverInterface;
  */
 class MessengerPass implements CompilerPassInterface
 {
+    private $handlerTag;
+    private $busTag;
+    private $receiverTag;
+
+    public function __construct(string $handlerTag = 'messenger.message_handler', string $busTag = 'messenger.bus', string $receiverTag = 'messenger.receiver')
+    {
+        if (0 < \func_num_args()) {
+            trigger_deprecation('symfony/messenger', '5.3', 'Configuring "%s" is deprecated.', __CLASS__);
+        }
+
+        $this->handlerTag = $handlerTag;
+        $this->busTag = $busTag;
+        $this->receiverTag = $receiverTag;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function process(ContainerBuilder $container)
     {
         $busIds = [];
-        foreach ($container->findTaggedServiceIds('messenger.bus') as $busId => $tags) {
+        foreach ($container->findTaggedServiceIds($this->busTag) as $busId => $tags) {
             $busIds[] = $busId;
             if ($container->hasParameter($busMiddlewareParameter = $busId.'.middleware')) {
                 $this->registerBusMiddleware($container, $busId, $container->getParameter($busMiddlewareParameter));
@@ -62,10 +77,10 @@ class MessengerPass implements CompilerPassInterface
         $handlersByBusAndMessage = [];
         $handlerToOriginalServiceIdMapping = [];
 
-        foreach ($container->findTaggedServiceIds('messenger.message_handler', true) as $serviceId => $tags) {
+        foreach ($container->findTaggedServiceIds($this->handlerTag, true) as $serviceId => $tags) {
             foreach ($tags as $tag) {
                 if (isset($tag['bus']) && !\in_array($tag['bus'], $busIds, true)) {
-                    throw new RuntimeException(sprintf('Invalid handler service "%s": bus "%s" specified on the tag "messenger.message_handler" does not exist (known ones are: "%s").', $serviceId, $tag['bus'], implode('", "', $busIds)));
+                    throw new RuntimeException(sprintf('Invalid handler service "%s": bus "%s" specified on the tag "%s" does not exist (known ones are: "%s").', $serviceId, $tag['bus'], $this->handlerTag, implode('", "', $busIds)));
                 }
 
                 $className = $this->getServiceClass($container, $serviceId);
@@ -78,7 +93,7 @@ class MessengerPass implements CompilerPassInterface
                 if (isset($tag['handles'])) {
                     $handles = isset($tag['method']) ? [$tag['handles'] => $tag['method']] : [$tag['handles']];
                 } else {
-                    $handles = $this->guessHandledClasses($r, $serviceId, $tag['method'] ?? '__invoke');
+                    $handles = $this->guessHandledClasses($r, $serviceId);
                 }
 
                 $message = null;
@@ -197,29 +212,25 @@ class MessengerPass implements CompilerPassInterface
         }
     }
 
-    private function guessHandledClasses(\ReflectionClass $handlerClass, string $serviceId, string $methodName): iterable
+    private function guessHandledClasses(\ReflectionClass $handlerClass, string $serviceId): iterable
     {
         if ($handlerClass->implementsInterface(MessageSubscriberInterface::class)) {
             return $handlerClass->getName()::getHandledMessages();
         }
 
         try {
-            $method = $handlerClass->getMethod($methodName);
-        } catch (\ReflectionException) {
-            throw new RuntimeException(sprintf('Invalid handler service "%s": class "%s" must have an "%s()" method.', $serviceId, $handlerClass->getName(), $methodName));
+            $method = $handlerClass->getMethod('__invoke');
+        } catch (\ReflectionException $e) {
+            throw new RuntimeException(sprintf('Invalid handler service "%s": class "%s" must have an "__invoke()" method.', $serviceId, $handlerClass->getName()));
         }
 
         if (0 === $method->getNumberOfRequiredParameters()) {
-            throw new RuntimeException(sprintf('Invalid handler service "%s": method "%s::%s()" requires at least one argument, first one being the message it handles.', $serviceId, $handlerClass->getName(), $methodName));
+            throw new RuntimeException(sprintf('Invalid handler service "%s": method "%s::__invoke()" requires at least one argument, first one being the message it handles.', $serviceId, $handlerClass->getName()));
         }
 
         $parameters = $method->getParameters();
-
-        /** @var \ReflectionNamedType|\ReflectionUnionType|null */
-        $type = $parameters[0]->getType();
-
-        if (!$type) {
-            throw new RuntimeException(sprintf('Invalid handler service "%s": argument "$%s" of method "%s::%s()" must have a type-hint corresponding to the message class it handles.', $serviceId, $parameters[0]->getName(), $handlerClass->getName(), $methodName));
+        if (!$type = $parameters[0]->getType()) {
+            throw new RuntimeException(sprintf('Invalid handler service "%s": argument "$%s" of method "%s::__invoke()" must have a type-hint corresponding to the message class it handles.', $serviceId, $parameters[0]->getName(), $handlerClass->getName()));
         }
 
         if ($type instanceof \ReflectionUnionType) {
@@ -236,10 +247,10 @@ class MessengerPass implements CompilerPassInterface
         }
 
         if ($type->isBuiltin()) {
-            throw new RuntimeException(sprintf('Invalid handler service "%s": type-hint of argument "$%s" in method "%s::%s()" must be a class , "%s" given.', $serviceId, $parameters[0]->getName(), $handlerClass->getName(), $methodName, $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type));
+            throw new RuntimeException(sprintf('Invalid handler service "%s": type-hint of argument "$%s" in method "%s::__invoke()" must be a class , "%s" given.', $serviceId, $parameters[0]->getName(), $handlerClass->getName(), $type instanceof \ReflectionNamedType ? $type->getName() : (string) $type));
         }
 
-        return ('__invoke' === $methodName) ? [$type->getName()] : [$type->getName() => $methodName];
+        return [$type->getName()];
     }
 
     private function registerReceivers(ContainerBuilder $container, array $busIds)
@@ -258,7 +269,7 @@ class MessengerPass implements CompilerPassInterface
             }
         }
 
-        foreach ($container->findTaggedServiceIds('messenger.receiver') as $id => $tags) {
+        foreach ($container->findTaggedServiceIds($this->receiverTag) as $id => $tags) {
             $receiverClass = $this->getServiceClass($container, $id);
             if (!is_subclass_of($receiverClass, ReceiverInterface::class)) {
                 throw new RuntimeException(sprintf('Invalid receiver "%s": class "%s" must implement interface "%s".', $id, $receiverClass, ReceiverInterface::class));
@@ -301,7 +312,7 @@ class MessengerPass implements CompilerPassInterface
             $consumeCommandDefinition->replaceArgument(4, array_values($receiverNames));
             try {
                 $consumeCommandDefinition->replaceArgument(6, $busIds);
-            } catch (OutOfBoundsException) {
+            } catch (OutOfBoundsException $e) {
                 // ignore to preserve compatibility with symfony/framework-bundle < 5.4
             }
         }

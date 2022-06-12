@@ -16,7 +16,7 @@ namespace Symfony\Component\Messenger;
  */
 final class WorkerMetadata
 {
-    private array $metadata;
+    private $metadata;
 
     public function __construct(array $metadata)
     {

@@ -16,8 +16,8 @@ namespace Symfony\Component\Messenger;
  */
 class TraceableMessageBus implements MessageBusInterface
 {
-    private MessageBusInterface $decoratedBus;
-    private array $dispatchedMessages = [];
+    private $decoratedBus;
+    private $dispatchedMessages = [];
 
     public function __construct(MessageBusInterface $decoratedBus)
     {

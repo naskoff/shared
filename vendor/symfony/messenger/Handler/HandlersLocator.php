@@ -22,7 +22,7 @@ use Symfony\Component\Messenger\Stamp\ReceivedStamp;
  */
 class HandlersLocator implements HandlersLocatorInterface
 {
-    private array $handlers;
+    private $handlers;
 
     /**
      * @param HandlerDescriptor[][]|callable[][] $handlers

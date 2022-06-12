@@ -32,8 +32,8 @@ class HandleMessageMiddleware implements MiddlewareInterface
 {
     use LoggerAwareTrait;
 
-    private HandlersLocatorInterface $handlersLocator;
-    private bool $allowNoHandlers;
+    private $handlersLocator;
+    private $allowNoHandlers;
 
     public function __construct(HandlersLocatorInterface $handlersLocator, bool $allowNoHandlers = false)
     {

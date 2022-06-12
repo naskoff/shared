@@ -18,17 +18,17 @@ namespace Symfony\Component\Messenger\Stamp;
  */
 final class TransportMessageIdStamp implements StampInterface
 {
-    private mixed $id;
+    private $id;
 
     /**
      * @param mixed $id some "identifier" of the message in a transport
      */
-    public function __construct(mixed $id)
+    public function __construct($id)
     {
         $this->id = $id;
     }
 
-    public function getId(): mixed
+    public function getId()
     {
         return $this->id;
     }

@@ -16,8 +16,8 @@ use Symfony\Component\Messenger\Stamp\StampInterface;
 
 abstract class AbstractWorkerMessageEvent
 {
-    private Envelope $envelope;
-    private string $receiverName;
+    private $envelope;
+    private $receiverName;
 
     public function __construct(Envelope $envelope, string $receiverName)
     {
