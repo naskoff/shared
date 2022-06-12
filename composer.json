@@ -1,0 +1,29 @@
+{
+  "name": "naskoff/shared",
+  "description": "Shred Messenger Messages",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Shared\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Shared\\Tests\\": "tests/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Zlatin Hristov",
+      "email": "zlatin.hristov@softavis.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "symfony/messenger": "^6.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  }
+}
