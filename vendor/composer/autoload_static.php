@@ -8,9 +8,10 @@ class ComposerStaticInit0c64630bd78ea8c05e4cdb67d4be90f8
 {
     public static $files = array (
         'ec07570ca5a812141189b1fa81503674' => __DIR__ . '/..' . '/phpunit/phpunit/src/Framework/Assert/Functions.php',
-        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '6e3fae29631ef280660b3cdad06f25a8' => __DIR__ . '/..' . '/symfony/deprecation-contracts/function.php',
+        'a4a119a56e50fbb293281d9a48007e0e' => __DIR__ . '/..' . '/symfony/polyfill-php80/bootstrap.php',
         '6124b4c8570aa390c21fafd04a26c69f' => __DIR__ . '/..' . '/myclabs/deep-copy/src/DeepCopy/deep_copy.php',
+        '09f6b20656683369174dd6fa83b7e5fb' => __DIR__ . '/..' . '/symfony/polyfill-uuid/bootstrap.php',
     );
 
     public static $prefixLengthsPsr4 = array (
@@ -24,8 +25,10 @@ class ComposerStaticInit0c64630bd78ea8c05e4cdb67d4be90f8
         ),
         'S' => 
         array (
+            'Symfony\\Polyfill\\Uuid\\' => 22,
             'Symfony\\Polyfill\\Php80\\' => 23,
             'Symfony\\Contracts\\Service\\' => 26,
+            'Symfony\\Component\\Uid\\' => 22,
             'Symfony\\Component\\Messenger\\Bridge\\Redis\\' => 41,
             'Symfony\\Component\\Messenger\\Bridge\\Doctrine\\' => 44,
             'Symfony\\Component\\Messenger\\Bridge\\Amqp\\' => 40,
@@ -63,6 +66,10 @@ class ComposerStaticInit0c64630bd78ea8c05e4cdb67d4be90f8
         array (
             0 => __DIR__ . '/..' . '/webmozart/assert/src',
         ),
+        'Symfony\\Polyfill\\Uuid\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/polyfill-uuid',
+        ),
         'Symfony\\Polyfill\\Php80\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/polyfill-php80',
@@ -70,6 +77,10 @@ class ComposerStaticInit0c64630bd78ea8c05e4cdb67d4be90f8
         'Symfony\\Contracts\\Service\\' => 
         array (
             0 => __DIR__ . '/..' . '/symfony/service-contracts',
+        ),
+        'Symfony\\Component\\Uid\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/symfony/uid',
         ),
         'Symfony\\Component\\Messenger\\Bridge\\Redis\\' => 
         array (

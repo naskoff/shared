@@ -8,8 +8,10 @@ $baseDir = dirname($vendorDir);
 return array(
     'phpDocumentor\\Reflection\\' => array($vendorDir . '/phpdocumentor/reflection-common/src', $vendorDir . '/phpdocumentor/reflection-docblock/src', $vendorDir . '/phpdocumentor/type-resolver/src'),
     'Webmozart\\Assert\\' => array($vendorDir . '/webmozart/assert/src'),
+    'Symfony\\Polyfill\\Uuid\\' => array($vendorDir . '/symfony/polyfill-uuid'),
     'Symfony\\Polyfill\\Php80\\' => array($vendorDir . '/symfony/polyfill-php80'),
     'Symfony\\Contracts\\Service\\' => array($vendorDir . '/symfony/service-contracts'),
+    'Symfony\\Component\\Uid\\' => array($vendorDir . '/symfony/uid'),
     'Symfony\\Component\\Messenger\\Bridge\\Redis\\' => array($vendorDir . '/symfony/redis-messenger'),
     'Symfony\\Component\\Messenger\\Bridge\\Doctrine\\' => array($vendorDir . '/symfony/doctrine-messenger'),
     'Symfony\\Component\\Messenger\\Bridge\\Amqp\\' => array($vendorDir . '/symfony/amqp-messenger'),
